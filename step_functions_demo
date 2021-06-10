@@ -1,0 +1,35 @@
+import json
+import boto3
+import requests
+import shutil
+from time import sleep
+
+
+def lambda_handler(event, context):
+    #problematic_batch_extraction()
+    
+    body = []
+    if event['Input']['Records'][0]['body'] == 'EXTRACTION_START':
+        data_to_extract = []
+        for i in range(1,152):
+            data_to_extract.append(i)
+        body = data_to_extract
+        
+    return {
+        'statusCode': 200,
+        'body':body
+    }
+            
+        
+
+
+def problematic_batch_extraction():
+    sqs_client = boto3.client('sqs')
+    s3_client = boto3.client('s3')
+    sqs_client = boto3.client('sqs')
+    for i in range(1,151):
+        sleep(10)
+        r = requests.get(f'https://pokeres.bastionbot.org/images/pokemon/{i}.png').content
+        with open(f'/tmp/{i}.png', 'wb') as f:
+            f.write(r) 
+        s3_client.upload_file(f'/tmp/{i}.png', 'bucket-do-roni-pokemon-pics', f'images/{i}/{i}.png')
