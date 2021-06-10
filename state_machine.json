@@ -1,0 +1,64 @@
+{
+    "StartAt": "Beginning",
+    "States": {
+      "Beginning": {
+        "Comment": "Kickoff",
+        "Type": "Pass",
+        "Next": "Trigger batch extractions"
+      },
+      
+  
+      "Trigger batch extractions": {
+          "Type": "Task",
+          "Resource": "arn:aws:states:::lambda:invoke",
+          "ResultPath":"$.WhatToExtract",
+          "Parameters": {
+            "FunctionName": "arn:aws:lambda:us-east-2:XXXXXXXXXXXX:function:step_functions_demo",
+            "Payload": {
+              "Input.$": "$"
+            }
+          },
+          "Next": "Run batch extractions one by one"
+      },
+  
+
+      "Run batch extractions one by one": {
+        "Type": "Map",
+        "InputPath": "$.WhatToExtract.Payload",
+        "ItemsPath": "$.body",
+        "MaxConcurrency": 0,
+        "Parameters": {
+            "PokedexEntry.$": "$$.Map.Item.Value"
+        },
+        "Iterator": {
+          "StartAt": "Validate",
+          "States": {
+            "Validate": {
+              "Type": "Task",
+              "Resource": "arn:aws:lambda:us-east-2:XXXXXXXXXXXX:function:single_extraction",
+              "End": true
+            }
+          }
+        },
+        "Next": "Send email"
+      },   
+  
+      "Send email": {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::lambda:invoke",
+        "Parameters": {
+          "FunctionName": "arn:aws:lambda:us-east-2:XXXXXXXXXXX:function:final_email",
+          "Payload": {
+            "Input": "SUCCESS"
+          }
+        },
+        "Next": "Email sent"
+    },
+
+  
+      "Email sent": {
+        "Type": "Pass",
+        "End": true
+      }
+    }
+  }
